@@ -1,0 +1,9 @@
+{
+    "path" : "~/projects/soccer_matches_prediction/data",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}

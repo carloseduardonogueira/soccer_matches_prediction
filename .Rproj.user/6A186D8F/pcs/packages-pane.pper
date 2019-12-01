@@ -1,0 +1,7 @@
+{
+    "installOptions" : {
+        "installDependencies" : true,
+        "installFromRepository" : true,
+        "libraryPath" : "/home/carloseduardo/anaconda3/envs/artificial-intelligence/lib/R/library"
+    }
+}
