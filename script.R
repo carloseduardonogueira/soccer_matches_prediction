@@ -158,12 +158,42 @@ derrotas <- filter(dataset, resultado == "D")
 empates <- filter(dataset, resultado == "E")
 vitorias <- filter(dataset, resultado == "V")
 
-ggplot(data = vitorias, aes(vitorias$clube_casa_id, vitorias$casaAta)) + 
-  geom_line()
-
-rodada1 <-filter(dataset, dataset$rodada==1)
-plot(rodada1)
-
-plot(dataset$rodada, dataset$casaAta, col=dataset$clube_casa_id)
 ggplot(data = dataset, aes(x=rodada, y=casaAta, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
   geom_line()
+
+x<- dataset$resultado
+y<- dataset$casaAta
+plot(x, y, color=x)
+
+ggplot(dataset, aes(visitanteDef, casaAta, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
+  geom_point() + facet_grid(.~resultado) +
+  xlab("Pontuação de defesa do time visitante") +
+  ylab("Pontuação de ataque do time da casa")
+
+ggplot(dataset, aes(casaDef, visitanteAta, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
+  geom_point() + facet_grid(.~resultado) +
+  xlab("Pontuação de defesa do time da casa") +
+  ylab("Pontuação de ataque do time visitante")
+
+ggplot(dataset, aes(visitanteMei, casaMei, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
+  geom_point() + facet_grid(.~resultado) +
+  xlab("Pontuação do meio campo do time visitante") +
+  ylab("Pontuação do meio campo do time da casa")
+
+rodada19 <- filter(dataset, rodada == 19, clube_casa_id ==293)
+ggplot(rodada19, aes(as.factor(clube_casa_id), casaAtaMedia))+
+  geom_bar(stat = "identity", fill="steelblue") +
+  ggtitle('Média do ataque dos times mandantes na última rodada') +
+  xlab('Id dos times') +
+  ylab('Média') +
+  geom_text(aes(label=casaAtaMedia), vjust=1.6, color="white", size=3.5)
+
+ggplot(dataset, aes(as.factor(clube_casa_id), length()))+
+  geom_bar(stat = "identity", fill="steelblue") +
+  ggtitle('Média do ataque dos times mandantes na última rodada') +
+  xlab('Id dos times') +
+  ylab('Média') +
+  geom_text(aes(label=casaAtaMedia), vjust=1.6, color="white", size=3.5)
+
+length(filter(dataset, clube_casa_id == 284, resultado=="V"))
+  
