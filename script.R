@@ -116,13 +116,6 @@ df_2014 <- create_df(matches_2014, scouts_2014)
 dataset <- rbind(df_2017, df_2016, df_2015, df_2014)
 dataset <- dataset[, -c(4:5)]
 
-derrotas <- filter(dataset, resultado == "D")
-empates <- filter(dataset, resultado == "E")
-vitorias <- filter(dataset, resultado == "V")
-
-ggplot(data = vitorias, aes(vitorias$clube_casa_id,vitorias$casaAta)) + 
-  geom_line()
-  
 set.seed(4321)
 sample_size <- floor(0.8 * nrow(dataset))
 idxs <- sample(seq_len(nrow(dataset)), size = sample_size)
@@ -159,3 +152,18 @@ dtree_pred <- predict(model, test, type = "class")
 
 confusionMatrix(dtree_pred,class_test)
 
+
+
+derrotas <- filter(dataset, resultado == "D")
+empates <- filter(dataset, resultado == "E")
+vitorias <- filter(dataset, resultado == "V")
+
+ggplot(data = vitorias, aes(vitorias$clube_casa_id, vitorias$casaAta)) + 
+  geom_line()
+
+rodada1 <-filter(dataset, dataset$rodada==1)
+plot(rodada1)
+
+plot(dataset$rodada, dataset$casaAta, col=dataset$clube_casa_id)
+ggplot(data = dataset, aes(x=rodada, y=casaAta, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
+  geom_line()
