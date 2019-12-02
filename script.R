@@ -4,6 +4,7 @@ library(caret)
 library(rpart)
 library(rpart.plot)
 library(ggplot2)
+library(FNN)
 
 #setting working directory
 location <- "/home/carloseduardo/projects/soccer_matches_prediction/data"
@@ -115,7 +116,10 @@ df_2014 <- create_df(matches_2014, scouts_2014)
 
 dataset <- rbind(df_2017, df_2016, df_2015, df_2014)
 dataset <- dataset[, -c(4:5)]
-
+dataset <- na.omit(dataset)
+#######################################
+#preparing dataframe for classification
+#######################################
 set.seed(4321)
 sample_size <- floor(0.8 * nrow(dataset))
 idxs <- sample(seq_len(nrow(dataset)), size = sample_size)
@@ -129,6 +133,20 @@ class_test <- factor(test_rows[,28])
 train <- train_rows[,-28]
 test <- test_rows[,-28]
 
+########################################################################
+#classification using KNN - K-Nearest Neighbors and calculating accuracy
+########################################################################
+k1<-knn(train, test, class_train, 1)
+confusionMatrix(k1,class_test)
+
+k3<-knn(train, test, class_train, 3)
+confusionMatrix(k3,class_test)
+
+k7<-knn(train, test, class_train, 7)
+confusionMatrix(k7,class_test)
+
+k9<-knn(train, test, class_train, 9)
+confusionMatrix(k9,class_test)
 ##################################################
 #classification using SVM - Support Vector Machine
 ##################################################
@@ -153,47 +171,66 @@ dtree_pred <- predict(model, test, type = "class")
 confusionMatrix(dtree_pred,class_test)
 
 
-
-derrotas <- filter(dataset, resultado == "D")
-empates <- filter(dataset, resultado == "E")
-vitorias <- filter(dataset, resultado == "V")
-
-ggplot(data = dataset, aes(x=rodada, y=casaAta, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
-  geom_line()
-
-x<- dataset$resultado
-y<- dataset$casaAta
-plot(x, y, color=x)
-
+#######################################
+#Dataset Analysis
+#######################################
 ggplot(dataset, aes(visitanteDef, casaAta, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
   geom_point() + facet_grid(.~resultado) +
   xlab("Pontuação de defesa do time visitante") +
-  ylab("Pontuação de ataque do time da casa")
+  ylab("Pontuação de ataque do time da casa") +
+  ggtitle("Pontuação Ataque Mandante x Pontuação Defesa Visitante")
 
 ggplot(dataset, aes(casaDef, visitanteAta, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
   geom_point() + facet_grid(.~resultado) +
   xlab("Pontuação de defesa do time da casa") +
-  ylab("Pontuação de ataque do time visitante")
+  ylab("Pontuação de ataque do time visitante") +
+  ggtitle("Pontuação Defesa Mandante x Pontuação Ataque Visitante")
 
 ggplot(dataset, aes(visitanteMei, casaMei, group = clube_casa_id, colour=as.factor(clube_casa_id))) + 
   geom_point() + facet_grid(.~resultado) +
   xlab("Pontuação do meio campo do time visitante") +
-  ylab("Pontuação do meio campo do time da casa")
+  ylab("Pontuação do meio campo do time da casa") +
+  ggtitle("Pontuação Meio Campo Mandante x Pontuação Meio Campo Visitante")
 
-rodada19 <- filter(dataset, rodada == 19, clube_casa_id ==293)
-ggplot(rodada19, aes(as.factor(clube_casa_id), casaAtaMedia))+
-  geom_bar(stat = "identity", fill="steelblue") +
-  ggtitle('Média do ataque dos times mandantes na última rodada') +
-  xlab('Id dos times') +
-  ylab('Média') +
-  geom_text(aes(label=casaAtaMedia), vjust=1.6, color="white", size=3.5)
+teams_results <- as.data.frame(table(dataset$clube_casa_id, dataset$resultado))
+colnames(teams_results)[2] <- "Resultado"
+ggplot() +
+  geom_col(data=teams_results, aes(x=Var1, y=Freq, fill = Resultado), position = "dodge")+
+  xlab("ID do time mandante") +
+  ylab("Frequência") +
+  ggtitle("Número de vitórias, empates e derrotas de cada mandante")
 
-ggplot(dataset, aes(as.factor(clube_casa_id), length()))+
-  geom_bar(stat = "identity", fill="steelblue") +
-  ggtitle('Média do ataque dos times mandantes na última rodada') +
-  xlab('Id dos times') +
-  ylab('Média') +
-  geom_text(aes(label=casaAtaMedia), vjust=1.6, color="white", size=3.5)
+rodada19 <- filter(dataset, rodada==19)
+medias <- data.frame(matrix(ncol = 4, nrow = 0))
+columns <- c("clube", "mediaMeio", "mediaDef", "mediaAta")
+colnames(medias) <- columns
+for (i in min(rodada19$clube_casa_id):max(rodada19$clube_casa_id)) {
+  clube <- filter(dataset, clube_casa_id == i)
+  if (nrow(clube)> 0){ 
+    row <- data.frame("clube"= clube$clube_casa_id, "mediaMeio"= max(clube$casaMeiMedia), "mediaDef"=max(clube$casaDefMedia), "mediaAta"= max(clube$casaMeiMedia))
+    medias <- rbind(medias, row)
+  }
+}
 
-length(filter(dataset, clube_casa_id == 284, resultado=="V"))
-  
+medias$clube <- as.factor(medias$clube)
+
+ggplot(data=medias, aes(x=clube, y=mediaAta)) +
+  geom_bar(stat = "identity", fill="steelblue") + 
+  ggtitle('Média da Pontuação de Ataque dos times mandantes na 19ª rodada') +
+  xlab('Clube') +
+  ylab('Media') +
+  geom_text(aes(label=mediaAta), vjust=0.1, color="white", size=3.0)
+
+ggplot(data=medias, aes(x=clube, y=mediaDef)) +
+  geom_bar(stat = "identity", fill="steelblue") + 
+  ggtitle('Média da Pontuação de Defesa dos times mandantes na 19ª rodada') +
+  xlab('Clube') +
+  ylab('Media') +
+  geom_text(aes(label=mediaDef), vjust=0.5, color="white", size=3.0)
+
+ggplot(data=medias, aes(x=clube, y=mediaMeio)) +
+  geom_bar(stat = "identity", fill="steelblue") + 
+  ggtitle('Média da Pontuação do Meio Campo dos times mandantes na 19ª rodada') +
+  xlab('Clube') +
+  ylab('Media') +
+  geom_text(aes(label=mediaMeio), vjust=0.5, color="white", size=3.0)
